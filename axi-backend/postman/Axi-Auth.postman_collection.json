@@ -1,0 +1,300 @@
+{
+  "info": {
+    "_postman_id": "axi-auth-api-collection",
+    "name": "Axi Auth API",
+    "description": "EASY URLs (no token):\n- POST http://localhost:8000/registered  → register\n- GET  http://localhost:8000/registered  → all users\n- GET  http://localhost:8000/registered?email=you@example.com  → one user\n\nRun npm run dev first.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "host", "value": "localhost", "type": "string" },
+    { "key": "port", "value": "8000", "type": "string" },
+    { "key": "token", "value": "", "type": "string" },
+    { "key": "email", "value": "test@example.com", "type": "string" },
+    { "key": "password", "value": "password123", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "1. Health Check",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "pm.test('Server is running', function () {",
+              "    pm.response.to.have.status(200);",
+              "    pm.expect(pm.response.json().success).to.eql(true);",
+              "});"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://{{host}}:{{port}}/health",
+          "protocol": "http",
+          "host": ["{{host}}"],
+          "port": "{{port}}",
+          "path": ["health"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "2. POST Register (simple URL)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.collectionVariables.set('email', 'user' + Date.now() + '@example.com');"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "pm.test('Register OK', function () {",
+              "    pm.response.to.have.status(201);",
+              "    pm.expect(json.data.user.email).to.exist;",
+              "});",
+              "if (json.data?.user?.email) {",
+              "    pm.collectionVariables.set('email', json.data.user.email);",
+              "    if (json.data.token) pm.collectionVariables.set('token', json.data.token);",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"Your Name\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "http://{{host}}:{{port}}/registered",
+          "protocol": "http",
+          "host": ["{{host}}"],
+          "port": "{{port}}",
+          "path": ["registered"]
+        },
+        "description": "Same as /registed — creates user and returns email, name, createdAt"
+      },
+      "response": []
+    },
+    {
+      "name": "3. GET All Registered Users",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "pm.test('List OK', function () {",
+              "    pm.expect(json.success).to.be.true;",
+              "    pm.expect(json.data.users).to.be.an('array');",
+              "});",
+              "console.log(JSON.stringify(json, null, 2));"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://{{host}}:{{port}}/registered",
+          "protocol": "http",
+          "host": ["{{host}}"],
+          "port": "{{port}}",
+          "path": ["registered"]
+        },
+        "description": "No token needed. Shows all users from Neon."
+      },
+      "response": []
+    },
+    {
+      "name": "4. GET One User by Email",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://{{host}}:{{port}}/registered?email={{email}}",
+          "protocol": "http",
+          "host": ["{{host}}"],
+          "port": "{{port}}",
+          "path": ["registered"],
+          "query": [{ "key": "email", "value": "{{email}}" }]
+        },
+        "description": "No token needed. Run POST Register first to set email variable."
+      },
+      "response": []
+    },
+    {
+      "name": "5. Register (api/auth)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "pm.collectionVariables.set('email', 'user' + Date.now() + '@example.com');"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "pm.test('Register OK', function () {",
+              "    pm.response.to.have.status(201);",
+              "    pm.expect(json.success).to.be.true;",
+              "    pm.expect(json.data.token).to.be.a('string');",
+              "});",
+              "if (json.data?.token) {",
+              "    pm.collectionVariables.set('token', json.data.token);",
+              "    pm.collectionVariables.set('email', json.data.user.email);",
+              "    console.log('Saved email:', json.data.user.email);",
+              "    console.log('Saved token. Run step 4 next.');",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\",\n  \"name\": \"Your Name\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "http://{{host}}:{{port}}/api/auth/register",
+          "protocol": "http",
+          "host": ["{{host}}"],
+          "port": "{{port}}",
+          "path": ["api", "auth", "register"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "6. Login",
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "pm.test('Login OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "    pm.expect(json.success).to.be.true;",
+              "    pm.expect(json.data.token).to.be.a('string');",
+              "});",
+              "if (json.data?.token) {",
+              "    pm.collectionVariables.set('token', json.data.token);",
+              "    console.log('Token saved. Run step 4 next.');",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{email}}\",\n  \"password\": \"{{password}}\"\n}",
+          "options": { "raw": { "language": "json" } }
+        },
+        "url": {
+          "raw": "http://{{host}}:{{port}}/api/auth/login",
+          "protocol": "http",
+          "host": ["{{host}}"],
+          "port": "{{port}}",
+          "path": ["api", "auth", "login"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "7. Get My Profile (needs token)",
+      "event": [
+        {
+          "listen": "prerequest",
+          "script": {
+            "exec": [
+              "if (!pm.collectionVariables.get('token')) {",
+              "    throw new Error('Run 2. Register or 3. Login first to get a token.');",
+              "}"
+            ],
+            "type": "text/javascript"
+          }
+        },
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "const json = pm.response.json();",
+              "pm.test('Profile OK', function () {",
+              "    pm.response.to.have.status(200);",
+              "    pm.expect(json.success).to.be.true;",
+              "    pm.expect(json.data.user.email).to.exist;",
+              "    pm.expect(json.data.user.createdAt).to.exist;",
+              "});",
+              "console.log(json.data.user);"
+            ],
+            "type": "text/javascript"
+          }
+        }
+      ],
+      "request": {
+        "auth": {
+          "type": "bearer",
+          "bearer": [
+            { "key": "token", "value": "{{token}}", "type": "string" }
+          ]
+        },
+        "method": "GET",
+        "header": [{ "key": "Accept", "value": "application/json" }],
+        "url": {
+          "raw": "http://{{host}}:{{port}}/api/auth/me",
+          "protocol": "http",
+          "host": ["{{host}}"],
+          "port": "{{port}}",
+          "path": ["api", "auth", "me"]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "8. Logout",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "http://{{host}}:{{port}}/api/auth/logout",
+          "protocol": "http",
+          "host": ["{{host}}"],
+          "port": "{{port}}",
+          "path": ["api", "auth", "logout"]
+        }
+      },
+      "response": []
+    }
+  ]
+}
