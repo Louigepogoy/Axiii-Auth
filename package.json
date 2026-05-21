@@ -1,0 +1,9 @@
+{
+  "name": "axi-backend-auth-root",
+  "private": true,
+  "scripts": {
+    "dev": "npm run dev --prefix axi-backend",
+    "install:all": "npm install --prefix axi-backend",
+    "db:push": "npm run db:push --prefix axi-backend"
+  }
+}
